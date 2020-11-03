@@ -1,7 +1,7 @@
 {
-  "name": "@fjedi/npm-package-template",
-  "version": "1.0.1",
-  "description": "NPM package template",
+  "name": "@fjedi/graphql-resolvers",
+  "version": "1.0.0",
+  "description": "List of helpers to simplify loading of the same type of data",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "files": [
@@ -26,7 +26,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fjedi/npm-package-template.git"
+    "url": "git+https://github.com/fjedi/graphql-resolvers.git"
   },
   "keywords": [
     "fjedi"
@@ -34,14 +34,17 @@
   "author": "Alexander Radyushin <r.alex.andr@ya.ru> (https://fjedi.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/fjedi/npm-package-template/issues"
+    "url": "https://github.com/fjedi/graphql-resolvers/issues"
   },
-  "homepage": "https://github.com/fjedi/npm-package-template#readme",
-  "dependencies": {},
+  "homepage": "https://github.com/fjedi/graphql-resolvers#readme",
+  "dependencies": {
+    "@fjedi/database-client": "1.0.11",
+    "@fjedi/errors": "1.0.0",
+    "graphql": "15.4.0"
+  },
   "devDependencies": {
     "@types/expect": "24.3.0",
     "@types/jest": "26.0.15",
-    "@types/lodash": "4.14.164",
     "@types/node": "14.14.6",
     "@typescript-eslint/eslint-plugin": "4.6.0",
     "@typescript-eslint/parser": "4.6.0",

@@ -1,11 +1,16 @@
-import * as assert from 'assert';
-import someFn from '../src';
+import { removeUndefinedValues } from '../src';
 
+const objectWithNullishFields = {
+  firstField: 'some-value',
+  secondField: 'some-another-value',
+  nullishField: null,
+  undefinedField: undefined,
+};
 
-describe('Test someFn', function () {
-  it('No error expected', async function () {
-    const result = someFn();
+describe('Test graphql-resolvers helper', function () {
+  it('Should filter nullish values from graphql-input', async function () {
+    const result = removeUndefinedValues(objectWithNullishFields);
 
-    expect(result).toBe(200);
+    expect(result).toMatchObject({ firstField: 'some-value', secondField: 'some-another-value' });
   });
 });
