@@ -69,6 +69,10 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
 //
 export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
 export type UpdateInstanceByIdOptions = {
+  preprocessInputData: (
+    instance: any,
+    args: UpdateInstanceByIdArgs,
+  ) => Promise<UpdateInstanceByIdArgs>;
   beforeTransaction?: (context: any, args: UpdateInstanceByIdArgs, instance: any) => Promise<any>;
   insideTransaction?: (
     context: any,
@@ -100,13 +104,17 @@ export function updateInstanceById(
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
     //
-    const updates = removeUndefinedValues(args.input);
+    const { preprocessInputData, beforeTransaction, insideTransaction } = options || {};
+    //
+    const { input } =
+      typeof preprocessInputData === 'function' ? await preprocessInputData(instance, args) : args;
+    //
+    const updates = removeUndefinedValues(input);
     //
     if (Object.keys(updates).length === 0) {
       return Promise.resolve(instance);
     }
     //
-    const { beforeTransaction, insideTransaction } = options || {};
     if (typeof beforeTransaction === 'function') {
       await beforeTransaction(context, args, instance);
     }
