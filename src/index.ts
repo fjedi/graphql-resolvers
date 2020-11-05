@@ -70,14 +70,19 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
 export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
 export type UpdateInstanceByIdOptions = {
   preprocessInputData: (
-    instance: any,
+    context: unknown,
+    instance: unknown,
     args: UpdateInstanceByIdArgs,
   ) => Promise<UpdateInstanceByIdArgs>;
-  beforeTransaction?: (context: any, args: UpdateInstanceByIdArgs, instance: any) => Promise<any>;
-  insideTransaction?: (
-    context: any,
+  beforeTransaction?: (
+    context: unknown,
     args: UpdateInstanceByIdArgs,
-    instance: any,
+    instance: unknown,
+  ) => Promise<any>;
+  insideTransaction?: (
+    context: unknown,
+    args: UpdateInstanceByIdArgs,
+    instance: unknown,
     transaction: DatabaseTransaction,
   ) => Promise<any>;
 };
@@ -107,7 +112,9 @@ export function updateInstanceById(
     const { preprocessInputData, beforeTransaction, insideTransaction } = options || {};
     //
     const { input } =
-      typeof preprocessInputData === 'function' ? await preprocessInputData(instance, args) : args;
+      typeof preprocessInputData === 'function'
+        ? await preprocessInputData(context, instance, args)
+        : args;
     //
     const updates = removeUndefinedValues(input);
     //
