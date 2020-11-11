@@ -69,7 +69,7 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
 //
 export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
 export type UpdateInstanceByIdOptions = {
-  preprocessInputData: (
+  preprocessInputData?: (
     context: unknown,
     instance: unknown,
     args: UpdateInstanceByIdArgs,
