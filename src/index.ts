@@ -12,9 +12,9 @@ export function removeUndefinedValues(values: { [key: string]: any }) {
   return res;
 }
 //
-export type FieldValue = any;
+export type FieldValue = unknown;
 export type FieldResolverParams = {
-  getDataFromParent?: (rootValue: any) => FieldValue;
+  getDataFromParent?: (rootValue: unknown) => FieldValue;
 };
 
 //
@@ -49,10 +49,11 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
   return async function resolve<TResult, TParent, TContext>(
     _: TParent,
     args: { id: string },
-    context: TContext & { db: DatabaseConnection },
+    context: TContext,
     resolveInfo: GraphQLResolveInfo,
   ): Promise<TResult | null> {
     const {
+      // @ts-ignore
       db: {
         helpers: { dbInstanceById },
       },
@@ -78,13 +79,13 @@ export type UpdateInstanceByIdOptions = {
     context: unknown,
     args: UpdateInstanceByIdArgs,
     instance: unknown,
-  ) => Promise<any>;
+  ) => Promise<unknown>;
   insideTransaction?: (
     context: unknown,
     args: UpdateInstanceByIdArgs,
     instance: unknown,
     transaction: DatabaseTransaction,
-  ) => Promise<any>;
+  ) => Promise<unknown>;
 };
 export function updateInstanceById(
   modelName: keyof DatabaseModels,
@@ -93,9 +94,10 @@ export function updateInstanceById(
   return async function resolve<TResult, TParent, TContext>(
     _: TParent,
     args: UpdateInstanceByIdArgs,
-    context: TContext & { db: DatabaseConnection },
+    context: TContext,
   ): Promise<TResult> {
     const {
+      // @ts-ignore
       db: {
         helpers: { dbInstanceById, wrapInTransaction },
       },
@@ -105,7 +107,11 @@ export function updateInstanceById(
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
     })) as TResult | null;
-    if (!instance || !(instance instanceof context.db.models[modelName])) {
+    if (
+      !instance ||
+      // @ts-ignore
+      !(instance instanceof context.db.models[modelName])
+    ) {
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
     //
@@ -126,7 +132,7 @@ export function updateInstanceById(
       await beforeTransaction(context, args, instance);
     }
     //
-    await wrapInTransaction(async (transaction) => {
+    await wrapInTransaction(async (transaction: DatabaseTransaction) => {
       if (typeof insideTransaction === 'function') {
         await insideTransaction(context, args, instance, transaction);
       }
@@ -144,9 +150,10 @@ export function destroyInstanceById(modelName: keyof DatabaseModels) {
   return async function resolve<TResult, TParent, TContext>(
     _: TParent,
     args: { id: string },
-    context: TContext & { db: DatabaseConnection },
+    context: TContext,
   ): Promise<TResult> {
     const {
+      // @ts-ignore
       db: {
         helpers: { dbInstanceById, wrapInTransaction },
       },
@@ -160,7 +167,7 @@ export function destroyInstanceById(modelName: keyof DatabaseModels) {
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
 
-    await wrapInTransaction(async (transaction) => {
+    await wrapInTransaction(async (transaction: DatabaseTransaction) => {
       // @ts-ignore
       await instance.destroy({
         transaction,
