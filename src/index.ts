@@ -13,9 +13,9 @@ export function removeUndefinedValues(values: { [key: string]: any }) {
 }
 //
 export type FieldValue = unknown;
-export type FieldResolverParams<TContext, TArgs> = {
+export type FieldResolverParams<TContext, TParent, TArgs> = {
   getDataFromParent?: (
-    rootValue: unknown,
+    rootValue: TParent,
     args: TArgs,
     context: TContext,
     info: GraphQLResolveInfo,
@@ -25,7 +25,7 @@ export type FieldResolverParams<TContext, TArgs> = {
 //
 export function fieldResolver<TContext, TParent, TArgs, TResult>(
   defaultResolver: GraphQLFieldResolver<TParent, TContext, TArgs>,
-  p?: FieldResolverParams<TContext, TArgs>,
+  p?: FieldResolverParams<TContext, TParent, TArgs>,
 ) {
   return function resolve(
     rootValue: TParent,
