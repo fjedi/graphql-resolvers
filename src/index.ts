@@ -13,7 +13,7 @@ export function removeUndefinedValues(values: { [key: string]: any }) {
 }
 //
 export type FieldValue = unknown;
-export type FieldResolverParams<TContext, TParent, TArgs> = {
+export type FieldResolverParams<TContext, TParent, TArgs = unknown> = {
   getDataFromParent?: (
     rootValue: TParent,
     args: TArgs,
@@ -23,7 +23,7 @@ export type FieldResolverParams<TContext, TParent, TArgs> = {
 };
 
 //
-export function fieldResolver<TContext, TParent, TArgs, TResult>(
+export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unknown>(
   defaultResolver: GraphQLFieldResolver<TParent, TContext, TArgs>,
   p?: FieldResolverParams<TContext, TParent, TArgs>,
 ) {
@@ -74,33 +74,27 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
 }
 //
 export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
-export type UpdateInstanceByIdOptions = {
+export type UpdateInstanceByIdOptions<TContext, TResult, TArgs> = {
   preprocessInputData?: (
-    context: unknown,
-    instance: unknown,
-    args: UpdateInstanceByIdArgs,
+    context: TContext,
+    instance: TResult,
+    args: TArgs,
   ) => Promise<UpdateInstanceByIdArgs>;
-  beforeTransaction?: (
-    context: unknown,
-    args: UpdateInstanceByIdArgs,
-    instance: unknown,
-  ) => Promise<unknown>;
+  beforeTransaction?: (context: TContext, args: TArgs, instance: TResult) => Promise<unknown>;
   insideTransaction?: (
-    context: unknown,
-    args: UpdateInstanceByIdArgs,
-    instance: unknown,
+    context: TContext,
+    args: TArgs,
+    instance: TResult,
     transaction: DatabaseTransaction,
   ) => Promise<unknown>;
 };
-export function updateInstanceById(
-  modelName: keyof DatabaseModels,
-  options?: UpdateInstanceByIdOptions,
-) {
-  return async function resolve<TResult, TParent, TContext>(
-    _: TParent,
-    args: UpdateInstanceByIdArgs,
-    context: TContext,
-  ): Promise<TResult> {
+export function updateInstanceById<
+  TContext,
+  TParent,
+  TArgs extends UpdateInstanceByIdArgs = UpdateInstanceByIdArgs,
+  TResult = unknown
+>(modelName: keyof DatabaseModels, options?: UpdateInstanceByIdOptions<TContext, TResult, TArgs>) {
+  return async function resolve(_: TParent, args: TArgs, context: TContext): Promise<TResult> {
     const {
       // @ts-ignore
       db: {

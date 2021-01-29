@@ -1,4 +1,4 @@
-import { removeUndefinedValues } from '../src';
+import { removeUndefinedValues, fieldResolver } from '../src';
 
 const objectWithNullishFields = {
   firstField: 'some-value',
