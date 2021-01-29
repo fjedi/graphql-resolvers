@@ -1,6 +1,6 @@
 {
   "name": "@fjedi/graphql-resolvers",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "description": "List of helpers to simplify loading of the same type of data",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/fjedi/graphql-resolvers#readme",
   "dependencies": {
-    "@fjedi/database-client": "3.9.4",
+    "@fjedi/database-client": "3.9.5",
     "@fjedi/errors": "1.1.2",
     "graphql": "15.5.0"
   },
