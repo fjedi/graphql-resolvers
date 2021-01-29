@@ -1,5 +1,5 @@
 import { GraphQLFieldResolver, GraphQLResolveInfo } from 'graphql';
-import { DatabaseConnection, DatabaseModels, DatabaseTransaction } from '@fjedi/database-client';
+import { DatabaseModels, DatabaseTransaction } from '@fjedi/database-client';
 import { DefaultError } from '@fjedi/errors';
 
 export function removeUndefinedValues(values: { [key: string]: any }) {
@@ -74,27 +74,29 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
 }
 //
 export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
-export type UpdateInstanceByIdOptions<TContext, TResult, TArgs> = {
+export type UpdateInstanceByIdOptions<TContext, TInstance, TArgs> = {
   preprocessInputData?: (
     context: TContext,
-    instance: TResult,
+    instance: TInstance,
     args: TArgs,
   ) => Promise<UpdateInstanceByIdArgs>;
-  beforeTransaction?: (context: TContext, args: TArgs, instance: TResult) => Promise<unknown>;
+  beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   insideTransaction?: (
     context: TContext,
     args: TArgs,
-    instance: TResult,
+    instance: TInstance,
     transaction: DatabaseTransaction,
   ) => Promise<unknown>;
 };
 export function updateInstanceById<
   TContext,
-  TParent,
-  TArgs extends UpdateInstanceByIdArgs = UpdateInstanceByIdArgs,
-  TResult = unknown
->(modelName: keyof DatabaseModels, options?: UpdateInstanceByIdOptions<TContext, TResult, TArgs>) {
-  return async function resolve(_: TParent, args: TArgs, context: TContext): Promise<TResult> {
+  TInstance,
+  TArgs extends UpdateInstanceByIdArgs = UpdateInstanceByIdArgs
+>(
+  modelName: keyof DatabaseModels,
+  options?: UpdateInstanceByIdOptions<TContext, TInstance, TArgs>,
+) {
+  return async function resolve(_: unknown, args: TArgs, context: TContext): Promise<TInstance> {
     const {
       // @ts-ignore
       db: {
@@ -105,7 +107,7 @@ export function updateInstanceById<
     const instance = (await dbInstanceById(modelName, args.id, {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
-    })) as TResult | null;
+    })) as TInstance | null;
     if (
       !instance ||
       // @ts-ignore
