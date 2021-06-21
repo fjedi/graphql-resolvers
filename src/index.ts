@@ -91,7 +91,7 @@ export type UpdateInstanceByIdOptions<TContext, TInstance, TArgs> = {
 export function updateInstanceById<
   TContext,
   TInstance,
-  TArgs extends UpdateInstanceByIdArgs = UpdateInstanceByIdArgs
+  TArgs extends UpdateInstanceByIdArgs = UpdateInstanceByIdArgs,
 >(
   modelName: keyof DatabaseModels,
   options?: UpdateInstanceByIdOptions<TContext, TInstance, TArgs>,
