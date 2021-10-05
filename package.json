@@ -39,7 +39,7 @@
   "dependencies": {
     "@fjedi/database-client": "4.2.3",
     "@fjedi/errors": "1.1.4",
-    "graphql": "15.6.0"
+    "graphql": "15.6.1"
   },
   "devDependencies": {
     "@types/expect": "24.3.0",
