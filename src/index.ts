@@ -147,12 +147,25 @@ export function updateInstanceById<
   };
 }
 //
-export function destroyInstanceById(modelName: keyof DatabaseModels) {
-  return async function resolve<TResult, TParent, TContext>(
-    _: TParent,
-    args: { id: string },
+export type DestroyInstanceByIdArgs = Pick<UpdateInstanceByIdArgs, 'id'>;
+export type DestroyInstanceByIdOptions<TContext, TInstance, TArgs> = {
+  beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
+  insideTransaction?: (
     context: TContext,
-  ): Promise<TResult> {
+    args: TArgs,
+    instance: TInstance,
+    transaction: DatabaseTransaction,
+  ) => Promise<unknown>;
+};
+export function destroyInstanceById<
+  TContext,
+  TInstance,
+  TArgs extends DestroyInstanceByIdArgs = DestroyInstanceByIdArgs,
+>(
+  modelName: keyof DatabaseModels,
+  options?: DestroyInstanceByIdOptions<TContext, TInstance, TArgs>,
+) {
+  return async function resolve(_: unknown, args: TArgs, context: TContext): Promise<TInstance> {
     const {
       // @ts-ignore
       db: {
@@ -163,12 +176,21 @@ export function destroyInstanceById(modelName: keyof DatabaseModels) {
     const instance = (await dbInstanceById(modelName, args.id, {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
-    })) as TResult | null;
+    })) as TInstance | null;
     if (!instance) {
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
+    //
+    const { beforeTransaction, insideTransaction } = options || {};
+    //
+    if (typeof beforeTransaction === 'function') {
+      await beforeTransaction(context, args, instance);
+    }
 
     await wrapInTransaction(async (transaction: DatabaseTransaction) => {
+      if (typeof insideTransaction === 'function') {
+        await insideTransaction(context, args, instance, transaction);
+      }
       // @ts-ignore
       await instance.destroy({
         transaction,
