@@ -73,8 +73,9 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
   };
 }
 //
-export type UpdateInstanceByIdArgs = { id: string; input: { [k: string]: any } };
+export type UpdateInstanceByIdArgs = { input: { [k: string]: unknown }; [k: string]: unknown };
 export type UpdateInstanceByIdOptions<TContext, TInstance, TArgs> = {
+  primaryKey?: string;
   preprocessInputData?: (
     context: TContext,
     instance: TInstance,
@@ -103,8 +104,15 @@ export function updateInstanceById<
         helpers: { dbInstanceById, wrapInTransaction },
       },
     } = context;
+    //
+    const {
+      primaryKey = 'id',
+      preprocessInputData,
+      beforeTransaction,
+      insideTransaction,
+    } = options || {};
 
-    const instance = (await dbInstanceById(modelName, args.id, {
+    const instance = (await dbInstanceById(modelName, args[primaryKey], {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
     })) as TInstance | null;
@@ -115,8 +123,6 @@ export function updateInstanceById<
     ) {
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
-    //
-    const { preprocessInputData, beforeTransaction, insideTransaction } = options || {};
     //
     const { input } =
       typeof preprocessInputData === 'function'
@@ -147,8 +153,9 @@ export function updateInstanceById<
   };
 }
 //
-export type DestroyInstanceByIdArgs = Pick<UpdateInstanceByIdArgs, 'id'>;
+export type DestroyInstanceByIdArgs = UpdateInstanceByIdArgs;
 export type DestroyInstanceByIdOptions<TContext, TInstance, TArgs> = {
+  primaryKey?: string;
   beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   insideTransaction?: (
     context: TContext,
@@ -172,16 +179,16 @@ export function destroyInstanceById<
         helpers: { dbInstanceById, wrapInTransaction },
       },
     } = context;
+    //
+    const { primaryKey = 'id', beforeTransaction, insideTransaction } = options || {};
 
-    const instance = (await dbInstanceById(modelName, args.id, {
+    const instance = (await dbInstanceById(modelName, args[primaryKey], {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
     })) as TInstance | null;
     if (!instance) {
       throw new DefaultError('No entry with such id found', { status: 404 });
     }
-    //
-    const { beforeTransaction, insideTransaction } = options || {};
     //
     if (typeof beforeTransaction === 'function') {
       await beforeTransaction(context, args, instance);
