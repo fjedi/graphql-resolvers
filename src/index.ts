@@ -1,6 +1,7 @@
 import { GraphQLFieldResolver, GraphQLResolveInfo } from 'graphql';
 import { DatabaseModels, DatabaseTransaction } from '@fjedi/database-client';
 import { DefaultError } from '@fjedi/errors';
+import { reduce as reducePromise } from 'bluebird';
 
 export function removeUndefinedValues(values: { [key: string]: any }) {
   const res: { [key: string]: any } = {};
@@ -48,6 +49,11 @@ export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unkn
     return defaultResolver(rootValue, args, context, info);
   };
 }
+
+export type CheckAccessFn<TContext, TArgs = unknown> = (
+  context: TContext,
+  args?: TArgs,
+) => Promise<boolean>;
 
 //
 export type ResolveInstanceByIdArgs = { [k: string]: unknown };
@@ -208,7 +214,7 @@ export function updateInstanceById<
 export type DestroyInstanceByIdArgs = ResolveInstanceByIdArgs;
 export type DestroyInstanceByIdOptions<TContext, TInstance, TArgs> = {
   primaryKey?: string;
-  checkAccess?: (context: TContext, args: TArgs) => Promise<boolean>;
+  checkAccess?: CheckAccessFn<TContext, TArgs>;
   checkInstanceAccess?: (context: TContext, instance: TInstance, args: TArgs) => Promise<boolean>;
   beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   afterTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
@@ -281,5 +287,75 @@ export function destroyInstanceById<
     }
 
     return instance;
+  };
+}
+
+export type AccessRulesTree<TContext, TArgs = unknown> = {
+  and: CheckAccessFn<TContext, TArgs>[];
+  or: CheckAccessFn<TContext, TArgs>[];
+};
+
+export type Checks<TContext, TArgs = unknown> =
+  | AccessRulesTree<TContext, TArgs>
+  | CheckAccessFn<TContext, TArgs>[];
+
+export async function allChecksPassed<TContext, TArgs = unknown>(
+  checks: CheckAccessFn<TContext, TArgs>[],
+  context: TContext,
+  args?: TArgs,
+) {
+  return reducePromise(
+    checks,
+    async (allowed, check) => {
+      if (!allowed) {
+        return allowed;
+      }
+      return check(context, args);
+    },
+    true,
+  );
+}
+
+export async function oneCheckPassed<TContext, TArgs = unknown>(
+  checks: CheckAccessFn<TContext, TArgs>[],
+  context: TContext,
+  args?: TArgs,
+) {
+  return reducePromise(
+    checks,
+    async (allowed, check) => {
+      if (allowed) {
+        return allowed;
+      }
+      return check(context, args);
+    },
+    false,
+  );
+}
+
+export async function resolverGuard<TContext, TArgs = unknown>(
+  resolver: GraphQLFieldResolver<unknown, TContext, TArgs>,
+  checks: Checks<TContext, TArgs>,
+) {
+  return async function resolve(
+    _: unknown,
+    args: TArgs,
+    context: TContext,
+    info: GraphQLResolveInfo,
+  ): Promise<unknown> {
+    if (Array.isArray(checks)) {
+      const hasAccess = await allChecksPassed(checks, context, args);
+      if (!hasAccess) {
+        throw new DefaultError('Access is denied', { status: 403 });
+      }
+    } else {
+      const { and, or } = checks;
+      const andPassed = and ? await allChecksPassed(and, context, args) : true;
+      const orPassed = or ? await oneCheckPassed(or, context, args) : true;
+      if (!andPassed || !orPassed) {
+        throw new DefaultError('Access is denied', { status: 403 });
+      }
+    }
+    return resolver(_, args, context, info);
   };
 }
