@@ -333,7 +333,7 @@ export async function oneCheckPassed<TContext, TArgs = unknown>(
   );
 }
 
-export async function resolverGuard<TContext, TArgs = unknown>(
+export function resolverGuard<TContext, TArgs = unknown>(
   resolver: GraphQLFieldResolver<unknown, TContext, TArgs>,
   checks: Checks<TContext, TArgs>,
 ) {
