@@ -50,13 +50,30 @@ export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unkn
 }
 
 //
-export function resolveInstanceById(modelName: keyof DatabaseModels) {
-  return async function resolve<TResult, TParent, TContext>(
+export type ResolveInstanceByIdArgs = { [k: string]: unknown };
+export type ResolveInstanceByIdOptions<TContext, TInstance, TArgs> = {
+  primaryKey?: string;
+  checkAccess?: (context: TContext, args: TArgs) => Promise<boolean>;
+  checkInstanceAccess?: (context: TContext, instance: TInstance, args: TArgs) => Promise<boolean>;
+};
+export function resolveInstanceById<
+  TContext,
+  TInstance,
+  TArgs extends ResolveInstanceByIdArgs = ResolveInstanceByIdArgs,
+>(
+  modelName: keyof DatabaseModels,
+  options?: ResolveInstanceByIdOptions<TContext, TInstance, TArgs>,
+) {
+  return async function resolve<TParent>(
     _: TParent,
-    args: { id: string },
+    args: TArgs,
     context: TContext,
     resolveInfo: GraphQLResolveInfo,
-  ): Promise<TResult | null> {
+  ): Promise<TInstance | null> {
+    const { checkAccess, checkInstanceAccess } = options ?? {};
+    if (typeof checkAccess === 'function' && !(await checkAccess(context, args))) {
+      throw new DefaultError('Access is denied', { status: 403 });
+    }
     const {
       // @ts-ignore
       db: {
@@ -67,15 +84,32 @@ export function resolveInstanceById(modelName: keyof DatabaseModels) {
     const instance = (await dbInstanceById(modelName, args.id, {
       resolveInfo,
       context,
-    })) as TResult | null;
+    })) as TInstance;
+
+    if (
+      !instance ||
+      // @ts-ignore
+      !(instance instanceof context.db.models[modelName])
+    ) {
+      throw new DefaultError('No entry with such id found', { status: 404 });
+    }
+
+    if (
+      typeof checkInstanceAccess === 'function' &&
+      !(await checkInstanceAccess(context, instance, args))
+    ) {
+      throw new DefaultError('Access is denied', { status: 403 });
+    }
 
     return instance;
   };
 }
 //
-export type UpdateInstanceByIdArgs = { input: { [k: string]: unknown }; [k: string]: unknown };
+export type UpdateInstanceByIdArgs = ResolveInstanceByIdArgs & { input: { [k: string]: unknown } };
 export type UpdateInstanceByIdOptions<TContext, TInstance, TArgs> = {
   primaryKey?: string;
+  checkAccess?: (context: TContext, args: TArgs) => Promise<boolean>;
+  checkInstanceAccess?: (context: TContext, instance: TInstance, args: TArgs) => Promise<boolean>;
   preprocessInputData?: (
     context: TContext,
     instance: TInstance,
@@ -110,8 +144,12 @@ export function updateInstanceById<
       preprocessInputData,
       beforeTransaction,
       insideTransaction,
+      checkAccess,
+      checkInstanceAccess,
     } = options || {};
-
+    if (typeof checkAccess === 'function' && !(await checkAccess(context, args))) {
+      throw new DefaultError('Access is denied', { status: 403 });
+    }
     const instance = (await dbInstanceById(modelName, args[primaryKey], {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
@@ -122,6 +160,12 @@ export function updateInstanceById<
       !(instance instanceof context.db.models[modelName])
     ) {
       throw new DefaultError('No entry with such id found', { status: 404 });
+    }
+    if (
+      typeof checkInstanceAccess === 'function' &&
+      !(await checkInstanceAccess(context, instance, args))
+    ) {
+      throw new DefaultError('Access is denied', { status: 403 });
     }
     //
     const { input } =
@@ -153,9 +197,11 @@ export function updateInstanceById<
   };
 }
 //
-export type DestroyInstanceByIdArgs = UpdateInstanceByIdArgs;
+export type DestroyInstanceByIdArgs = ResolveInstanceByIdArgs;
 export type DestroyInstanceByIdOptions<TContext, TInstance, TArgs> = {
   primaryKey?: string;
+  checkAccess?: (context: TContext, args: TArgs) => Promise<boolean>;
+  checkInstanceAccess?: (context: TContext, instance: TInstance, args: TArgs) => Promise<boolean>;
   beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   insideTransaction?: (
     context: TContext,
@@ -180,14 +226,28 @@ export function destroyInstanceById<
       },
     } = context;
     //
-    const { primaryKey = 'id', beforeTransaction, insideTransaction } = options || {};
-
+    const {
+      primaryKey = 'id',
+      beforeTransaction,
+      insideTransaction,
+      checkAccess,
+      checkInstanceAccess,
+    } = options || {};
+    if (typeof checkAccess === 'function' && !(await checkAccess(context, args))) {
+      throw new DefaultError('Access is denied', { status: 403 });
+    }
     const instance = (await dbInstanceById(modelName, args[primaryKey], {
       context,
       cachePolicy: 'no-cache', // We shouldn't use cache for instances returned as mutations' result
     })) as TInstance | null;
     if (!instance) {
       throw new DefaultError('No entry with such id found', { status: 404 });
+    }
+    if (
+      typeof checkInstanceAccess === 'function' &&
+      !(await checkInstanceAccess(context, instance, args))
+    ) {
+      throw new DefaultError('Access is denied', { status: 403 });
     }
     //
     if (typeof beforeTransaction === 'function') {
