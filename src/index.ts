@@ -291,8 +291,8 @@ export function destroyInstanceById<
 }
 
 export type AccessRulesTree<TContext, TArgs = unknown> = {
-  and: CheckAccessFn<TContext, TArgs>[];
-  or: CheckAccessFn<TContext, TArgs>[];
+  and?: CheckAccessFn<TContext, TArgs>[];
+  or?: CheckAccessFn<TContext, TArgs>[];
 };
 
 export type Checks<TContext, TArgs = unknown> =
