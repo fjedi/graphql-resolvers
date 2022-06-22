@@ -116,6 +116,7 @@ export type UpdateInstanceByIdOptions<TContext, TInstance, TArgs> = {
     args: TArgs,
   ) => Promise<UpdateInstanceByIdArgs>;
   beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
+  afterTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   insideTransaction?: (
     context: TContext,
     args: TArgs,
@@ -144,6 +145,7 @@ export function updateInstanceById<
       preprocessInputData,
       beforeTransaction,
       insideTransaction,
+      afterTransaction,
       checkAccess,
       checkInstanceAccess,
     } = options || {};
@@ -195,6 +197,9 @@ export function updateInstanceById<
         transaction,
       });
     });
+    if (typeof afterTransaction === 'function') {
+      await afterTransaction(context, args, instance);
+    }
 
     return Promise.resolve(instance);
   };
@@ -206,6 +211,7 @@ export type DestroyInstanceByIdOptions<TContext, TInstance, TArgs> = {
   checkAccess?: (context: TContext, args: TArgs) => Promise<boolean>;
   checkInstanceAccess?: (context: TContext, instance: TInstance, args: TArgs) => Promise<boolean>;
   beforeTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
+  afterTransaction?: (context: TContext, args: TArgs, instance: TInstance) => Promise<unknown>;
   insideTransaction?: (
     context: TContext,
     args: TArgs,
@@ -233,6 +239,7 @@ export function destroyInstanceById<
       primaryKey = 'id',
       beforeTransaction,
       insideTransaction,
+      afterTransaction,
       checkAccess,
       checkInstanceAccess,
     } = options || {};
@@ -259,7 +266,6 @@ export function destroyInstanceById<
     if (typeof beforeTransaction === 'function') {
       await beforeTransaction(context, args, instance);
     }
-
     await wrapInTransaction(async (transaction: DatabaseTransaction) => {
       if (typeof insideTransaction === 'function') {
         await insideTransaction(context, args, instance, transaction);
@@ -269,6 +275,10 @@ export function destroyInstanceById<
         transaction,
       });
     });
+
+    if (typeof afterTransaction === 'function') {
+      await afterTransaction(context, args, instance);
+    }
 
     return instance;
   };
