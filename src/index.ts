@@ -344,14 +344,14 @@ export function resolverGuard<TContext, TArgs = unknown>(
     info: GraphQLResolveInfo,
   ): Promise<unknown> {
     if (Array.isArray(checks)) {
-      const hasAccess = await allChecksPassed(checks, context, args);
+      const hasAccess = await allChecksPassed<TContext, TArgs>(checks, context, args);
       if (!hasAccess) {
         throw new DefaultError('Access is denied', { status: 403 });
       }
     } else {
       const { and, or } = checks;
-      const andPassed = and ? await allChecksPassed(and, context, args) : true;
-      const orPassed = or ? await oneCheckPassed(or, context, args) : true;
+      const andPassed = and ? await allChecksPassed<TContext, TArgs>(and, context, args) : true;
+      const orPassed = or ? await oneCheckPassed<TContext, TArgs>(or, context, args) : true;
       if (!andPassed || !orPassed) {
         throw new DefaultError('Access is denied', { status: 403 });
       }
