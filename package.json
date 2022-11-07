@@ -37,7 +37,7 @@
   },
   "homepage": "https://github.com/fjedi/graphql-resolvers#readme",
   "dependencies": {
-    "@fjedi/database-client": "4.3.8",
+    "@fjedi/database-client": "4.4.0",
     "@fjedi/errors": "1.1.4",
     "bluebird": "3.7.2",
     "graphql": "15.8.0"
