@@ -24,7 +24,7 @@ export type FieldResolverParams<TContext, TParent, TArgs = unknown> = {
 };
 
 //
-export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unknown>(
+export async function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unknown>(
   defaultResolver: GraphQLFieldResolver<TParent, TContext, TArgs>,
   p?: FieldResolverParams<TContext, TParent, TArgs>,
 ) {
@@ -33,7 +33,7 @@ export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unkn
     args: TArgs,
     context: TContext,
     info: GraphQLResolveInfo,
-  ): Promise<TResult> | TResult {
+  ): unknown {
     const { fieldName } = info;
     const { getDataFromParent } = p || {};
     const fieldValue =
