@@ -37,7 +37,6 @@
   },
   "homepage": "https://github.com/fjedi/graphql-resolvers#readme",
   "dependencies": {
-    "@fjedi/database-client": "4.6.7",
     "@fjedi/errors": "1.1.4",
     "bluebird": "3.7.2",
     "graphql": "16.6.0"
@@ -60,6 +59,9 @@
     "rimraf": "5.0.1",
     "ts-jest": "29.1.0",
     "typescript": "5.0.4"
+  },
+  "peerDependencies": {
+    "@fjedi/database-client": "4.6.7"
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
