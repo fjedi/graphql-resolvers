@@ -24,7 +24,7 @@ export type FieldResolverParams<TContext, TParent, TArgs = unknown> = {
 };
 
 //
-export async function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unknown>(
+export function fieldResolver<TContext, TParent, TArgs = unknown, TResult = unknown>(
   defaultResolver: GraphQLFieldResolver<TParent, TContext, TArgs>,
   p?: FieldResolverParams<TContext, TParent, TArgs>,
 ) {
