@@ -58,7 +58,7 @@
     "prettier": "2.8.8",
     "rimraf": "5.0.10",
     "ts-jest": "29.2.5",
-    "typescript": "5.3.3"
+    "typescript": "5.7.2"
   },
   "peerDependencies": {
     "@fjedi/database-client": "4.6.8"
